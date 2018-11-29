@@ -1,0 +1,1741 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "Content API is the core of communications between client applications and TV Open Platform.\n\nIt is a RESTful API implementation that returns objects represented in JSON.\n\nBased on open REST API standards, you can use any web development language to perform your requests to the API.\n\nBasically, your application will make HTTP requests (or HTTPS in some cases) and parse the response.\n# URL Structure\nThis is the basic URL structure for all Content API calls: http://{contentApiUrl}/{instanceID}/{catalogName}/{catalogLanguage}\n\nAs part of each project’s documentation, available instance IDs, catalog names and catalog languages for your project will be provided by TV Open Platform team. contentApiUrl is the basic root URL for Content API.\n## Instance\nInstance is often used as a partner or a region/country separator for the same partner. Each instance has its own ID. Generally, from the end-user point of view, each client application is based on a single Instance.\n## Catalog Name\nA catalog is a single, isolated database with all available contents. All Content API methods are performed within a catalog. This means that if one instance has 3 catalogs (e.g. default, adult and kids) and you request “all movies from the default catalog”, no movies from the adult or kids catalogs will be in the response.\nIn GVP the catalog name is \"default\"\n## Catalog Language\nComplying to the BCP-47 standard that Microsoft uses for most of its applications, catalogLanguage is formatted as Language-Region using ISO 639-1 for language and ISO 3166-1 alpha-2 for region. Examples:\n* pt-BR : Brazilian Portuguese\n* en-US : American English\n* es-CO : Colombian Spanish\n# Content\nContent is the basic unit handled by the catalog. Each content has its type, PID, properties and attributes, as well as its relations with other contents. The most basic type of Content is following one:\n```\n{\n  \"Pid\": \"MOV0001\",\n  \"Title\": \"Movie One Example\"\n}\n```\n\nFor Content API, a Series is as much a content as a Season or an Episode, and they relate to each other in a “father-children” relationship.\n\nAlso, contents can be customized. Basically, one content has the following attributes, but you can extend it using specifica contents or with content properties during catalog export process.\n```\n{\n  \"Pid\": \"MOV0001\",\n  \"Title\": \"Movie One Example\",\n  \"ShortDescription\": \"Movie One Example is the best action movie from last decade\",\n  \"AgeRatingPid\": \"AGE_TNONE\",\n  \"AvailableUntil\": 11340230079,\n  \"OriginalTitle\": \"Movie One\",\n}\n```\n\n## Content Type\nEach content has its own type. Depending on that, its properties and attributes might differ from one another, e.g. a Live Program Schedule has “start time” and “end time” as properties, but these are useless for VOD Movies or Package Subscriptions.\n\nContent Types are formatted as a 3-letter string. Built-in types:\n* Movie : MOV\n  * Custom attributes\n    * CA_CommercializationType\n    * CA_DeviceTypes\n    * CA_DeviceTypes_Qualities\n    * CA_Distributor\n    * CA_GVPId\n    * CA_Products\n    * CA_RequiresPin\n    * CA_Type\n  * Relations\n    * Genre\n      * GEN\n    * Actor\n      * PER\n    * Director\n      * PER\n    * Writer\n      * PER\n    * Producer\n      * PER\n    * ProductDependencies\n      * SUB\n    * Media\n      * MED\n    * Subtitle\n      * STL\n    * Provider\n      * CMP\n    * Staff\n      * PER\n    * PricingModel\n      * COR\n      \n\n* Series : SER\n  * Custom attributes\n    * CA_CommercializationType\n    * CA_DeviceTypes\n    * CA_DeviceTypes_Qualities\n    * CA_Distributor\n    * CA_GVPId\n    * CA_Products\n    * CA_RequiresPin\n    * CA_Type\n  * Relations\n    * Child\n      * SEA\n    * Genre\n      * GEN\n    * Actor\n      * PER\n    * Season\n      * EPI\n    * ProductDependencies\n      * SUB\n    * Media\n      * MED\n    * Provider\n      * CMP\n    * Staff\n      * PER\n    * PricingModel\n      * COR\n      \n    \n* Season : SEA\n  * Custom attributes\n    * CA_CommercializationType\n    * CA_DeviceTypes\n    * CA_DeviceTypes_Qualities\n    * CA_Distributor\n    * CA_GVPId\n    * CA_Products\n    * CA_RequiresPin\n    * CA_Type\n  * Relations\n    * Child\n      * EPI\n    * Genre\n      * GEN\n    * Episode\n      * EPI\n    * ProductDependencies\n      * SUB\n    * Media\n      * MED\n    * Provider\n      * CMP\n    * PricingModel\n      * COR\n\n* Episode : EPI\n  * Custom attributes\n    * CA_CommercializationType\n    * CA_DeviceTypes\n    * CA_DeviceTypes_Qualities\n    * CA_Distributor\n    * CA_GVPId\n    * CA_Products - Deprecated ?\n    * CA_RequiresPin\n    * CA_Type\n    * CA_NextEpisode\n  * Relations\n    * Genre\n      * GEN\n    * Actor\n      * PER\n    * Director\n      * PER\n    * ProductDependencies\n      * SUB\n    * Media\n      * MED\n    * Subtitle\n      * STL\n    * Provider\n      * CMP\n    * Staff\n      * PER\n    * PricingModel\n      * COR\n\n\n* Media : MED\n  * Custom attributes\n    * CA_UrlType\n    * CA_IsExternal\n    * CA_DeviceTypes\n    \n    \n* Live Channel : LCH\n  * Custom attributes\n    * CA_RestartTVWindowDuration\n    * CA_RequiresPin\n    * CA_Pod_Cdn_Bucket_Id\n    * CA_HiddenFlag\n    * CA_DeviceTypes_Qualities\n    * CA_DeviceTypes_IsStartOverEnable\n    * CA_DeviceTypes_IsRestartTVEnable\n    * CA_DeviceTypes_IsPlayback\n    * CA_DeviceTypes_IsCatchup\n    * CA_DeviceTypes\n    * CA_ChannelType\n    * CA_ChannelMaps\n    * CA_ChannelMapNumber\n    * CA_CallLetter\n    * CA_Active\n    * CA_EpgLiveChannelReferenceID\n  * Relations\n    * Schedule\n      * LSC\n    * ProductDependencies\n      * SUB\n    * LiveTVShow\n      * LPR\n    * Media\n      * MED\n    \n    \n* Live Schedule : LSC\n  * Custom attributes\n    * CA_Blackout\n    * CA_DateStart\n    * CA_DeviceTypes\n    * CA_EpgLiveChannelReferenceId\n    * CA_EpgLiveProgramReferenceId\n    * CA_EpgSerieId\n    * CA_GenreIds\n    * CA_IsHighlight\n    * CA_LiveChannelPid\n    * CA_LiveProgramPid\n    * CA_Ppv\n    * CA_ProgramTypeId\n    * CA_RequiresPin\n  * Relations\n    * Genre\n      * GEN\n    * Actor\n      * PER\n    * Director\n      * PER\n\n* Person : PER\n  * Custom attributes\n    * CA_RequiresPin=null\n    * CA_DeviceTypes=null\n\n\n* Age Rating: AGE\n  * Custom attributes\n    * None\n    \n    \n* Genre : GEN\n  * Custom attributes\n    * CA_RequiresPin=null\n    * CA_DeviceTypes=null\n\n\n* Editorial Content : LNK \n  * Custom attributes\n    * CA_UserTypes\n    * CA_RequiresPin\n    * CA_RelatedContentId\n    * CA_Keywords\n    * CA_HasImage\n    * CA_GVPContentType\n    * CA_DeviceTypes\n    * CA_ChildContentType\n  * Relations\n    * Creator\n      * CHA\n      * MOV\n      * EPI\n      * SER\n      * LCH\n      * SUB\n\n* Pricing : COR \n  * Custom attributes\n    * CA_ContentType=PRI\n    * CA_UserTypes ('Telefonica','NonTelefonica')\n\n\n* Channel Map: CHA\n  * Custom attributes\n    * CA_IsChannelMap=true\n    * CA_IsRegion=false\n    * CA_IsCatalog=false\n    * CA_IsTvTech=false\n    * CA_RequiresPin=false\n    * CA_RegionId\n    * CA_TvTechnologyId\n\n\n* TV Technology: CHA \n  * Custom attributes\n    * CA_IsTvTech=true\n    * CA_IsRegion=false\n    * CA_IsCatalog=false\n    * CA_IsChannelMap=false\n\n\n* VOD Channel : CHA\n  * Custom attributes\n    * CA_IsCatalog=true\n    * CA_IsMenu=false\n    * CA_IsTvTech=false\n    * CA_IsServiceType=false\n    * CA_IsRegion=false\n    * CA_IsChannelMap=false\n    * CA_DeviceTypes\n    * CA_RequiresPin\n    * CA_AnyLevelChildren\n  * Relations\n    * Child\n      * CHA (VodChannel)\n      * EPI\n      * LNK (EditorialContent)\n      * LSC\n      * MOV\n      * SEA\n      * SER\n    * AnyLevelChildren\n      * CHA (VodChannel)\n      \n      \n* Menu: CHA\n  * Custom attributes\n    * CA_IsMenu=true\n    * CA_IsCatalog=false\n    * CA_IsTvTech=false\n    * CA_IsServiceType=false\n    * CA_IsRegion=false\n    * CA_IsChannelMap=false\n    * CA_RequiresPin=false\n    * CA_DeviceTypes\n  * Child\n    * CHA (VodChannel)\n  \n  \n* Region: CHA \n  * Custom attributes\n    * CA_IsRegion=true\n    * CA_IsCatalog=false\n    * CA_IsTvTech=false\n    * CA_IsChannelMap=false\n\n\n* Service: CHA\n  * Custom attributes\n    * CA_IsServiceType=true\n    * CA_IsCatalog=false\n    * CA_IsService=false\n    * CA_DeviceTypes=null\n    * CA_RequiresUserAgreement\n\n* Subtitle: STL\n  * Custom attributes\n    * None\n    \n    \n* Producer: CMP\n  * Custom attributes\n    * None\n    \n    \n* Subscription : SUB\n  * Custom attributes\n    * CA_IsSubscription=true\n    * CA_DeviceTypes=null\n    * CA_Type=Normal\n    * CA_RequiresPin\n    * CA_IsVisible\n    * CA_IsOTT\n    * CA_IsHybrid\n    * CA_IsIptv\n    * CA_Status=Active\n    * CA_UserTypes ('Anonmous','Telefonica','Non Telefonica','Both')\n    * CA_PurchaseType ('ApiOnly','Both','ProvisioningOnly')\n    * CA_Products - Deprecated ?\n  * Relations\n    * Child\n      * EPI\n      * LCH\n      * MOV\n      * SEA\n      * SER\n    * ProductDependencies\n      * CHA\n      * SUB\n    * PricingModel\n      * COR\n\n    \n* Subscription Service: SUB\n  * Custom attributes\n    * CA_IsService=true\n\n\nContent API is agnostic regarding which content types exist on database. Some requests have content types as required parameters. If you request passing a unexistent content type, Content API will not return an exception. It will return HTTP 200 with an empty list, instead.\n## PID (Permanent ID)\nAll contents have their Permanent ID, which always start with the content type 3-letter string, followed by a number or a text, always formatted as a string.\n\nA Movie will always be MOVxxxx (e.g. MOV1234), a Series will always be SERxxxx, and so on.\n\n## Content Relation\nContents relate to each other in different ways. Most common relation type is “Child”, e.g. Episodes are children to a Season and Seasons are children to Series. All the built-in relations are the following:\n* Child\n* Genre\n* Actor\n* Director\n* Writer\n* Producer\n* Composer\n* Creator\n* Season\n* Episode\n* Schedule\n* ProductDependencies\n* LiveTVShow\n* Media\n* Subtitle\n* AudioTrack\n* Provider\n* MiscStaff\n* Trailer\n* Artist\n* Album\n* Publisher\n* Song\n* Distributor\n* Game\n\nEach relation has a Source PID and a Target PID. The Source PID belongs to the content at the starting point of the relation, while the Target PID belongs to the content at the end point. This can be easily understood in “child” relations, in which the Source and Target PIDs refer to the parent and child contents, respectively.\n\nSome API routes support an attribute called includeRelations, where you can set which related contents' PIDs you would like to get in your response.\n\n## Content Property\nAll contents have basic properties, such as Title, Short Description and Age Rating.\nBasic Properties List\n* PID\n* AVAILABLE_FROM_UTC\n* AVAILABLE_UNTIL_UTC\n* TITLE\n* SHORT_DESCRIPTION\n* AVERAGE_RATING\n* TOTAL_VOTES\n* AGE_RATING_PID\n* CONTENT_TYPE\n* DESCRIPTION\n* DURATION\n* YEAR\n* VIEWS\n* RECENT_VIEWS\n* RELEASE_DATE\n* COUNTRY\n* ORIGINAL_TITLE\n\nEach content type has also its own properties. The list of properties for each built-in type is the following:\n* Episode (EPI)\n    * SeriesPid\n    * SeasonPid\n    * EpisodeNumber\n* Link (LNK)\n    * Url\n    * Html\n    * LinkedContentPid\n* Live Channel (LCH)\n    * CallLetter\n    * ChannelNumber\n* Live Schedule (LSC)\n    * Start\n    * End\n    * LiveProgramPid\n    * LiveChannelPid\n    * LiveSeriesPid\n* Media (MED)\n    * Url\n    * StreamingType\n    * Quality (HighDefinitionFull, HighDefinition, StandardDefinition, LowDefinition)\n    * ContentPid\n    * AudioTracks\n    * Subtitles\n    * ExpirationDate\n    * PublicUrl\n    * PrivateUrl\n* Series (SER)\n    * SeriesPid\n    * SeasonNumber\n* Subtitle (STL)\n    * LanguageCode\n    * Description\n    * Url\n    * SubtitleType (BurnIn, Embedded, External)\n    \nFull list of Properties: PID,Personal,RequiresPin,ContentOrder,ParentChannelId,SubscriptionId,HasChildren,HasNew,HasPopular,DisableNavigation,IsSpecialChannel, HasFeaturedMovies,ChannelContentType,VodDefaultOrder,LiveDefaultOrder,UxReferenceSearch,UxReferenceLayout,NextLevel,MenuType,TitleInMenu,IsDefault,GeographicAreaCode,TvTransport,RegionName,TvTechnologyName,Name,Ppv,Dvr,Active,TimeShift,EpgLiveChannelReferenceId,StatusDate,IsExternal,ProviderChannel,LXDChannel,HasSubtitle,DistributorId,PromotionalRating,EpgNetworkDvr,CallLetter,ChannelName,ChannelNumber,DateStart,EpgSerieId,ChannelId,ProgramId,EpgChannelId,ClosedCaption,Dolby,Quality,EpgScheduleId,SeriesId,SeriesName,SeasonNumber,EpisodeTitle,EpisodeNumber,ProgramTypeId,ProgramProvider,EnableCatchup,Extension,UseCdnToken,CdnTokenSecret,MediaType,DRMType,LanguageList,Aspect,ProducerName,Distributor,SeasonId,ImdbRating,IsDtp,CommercializationType,AssetType,IsComingSoon,TwitterHashtag,FinalYear,TotalChildren,StatusDateOrder,TransparentProvider,ExternalCatchupUrn,PersonId,FirstName,LastName,DateIns,RequiredDays,TrialDays,ChildCount,GvpType,Status,PurchaseType,IsHybrid,IsIptv,IsOtt,EpgFileVersion,PricingModelPrice,RecurrenceType,IsRecurring,RecurrenceDays,CatalogItemId,CatalogItemPid,EditorialContentChannelId,EditorialContentId,ChildrenCount,ChannelType\nProperties may vary according to content types. When necessary for a new requirement, custom properties may be created.\n\nOn API calls that accept the ‘orderBy’ parameter, you may order by any content property (e.g. orderBy=year).\n\nOn API calls that accept the ‘searchFields’ parameter, you may use any content property for filtering (e.g. searchFields=year).\n\n## Content Custom Attributes\nCustom Attributes are built according to partners' requirements, always starting with “ca_” (custom attribute). Attribute names are specific per project.\n\nAPI does not support orderBy with any Custom Attribute. It does support, however, filtering by Custom Attributes in the query string. See ContentAttributeFilters.\n\nYou may also request Custom Attributes as an included information. See IncludeAttributes.\n\n## DateTime format\nAll properties and parameters that handle datetime - both in requests and responses - use UnixTime UTC.\n## Availability\nAll contents have two datetime properties that define their availability: Available From and Available Until.\n\nA content is treated as available while the current time is between its Available From and Available Until values.\n\nSome API calls allow you to determine whether an availability filter should be applied to the results or not. See FilterAvailability.\n## Image Types\nContents can have images associated with them. Each image must have an image type to categorize it. Allowed types are the following:\n\n  * Cover\n  * VideoFrame\n  * Banner\n  * Icon\n  * Background\n  * Logo\n  * RegistrationBanner\n  * PaymentMethodImages\n  * LandscapeCover\n  * LandscapeArt\n  * PortraitArt\n",
+    "version" : "3.16.6.383",
+    "title" : "Content API Documentation"
+  },
+  "host" : "contentapi-cert.cdnprepro.telefonica.com",
+  "schemes" : [ "http" ],
+  "produces" : [ "application/json" ],
+  "paths" : {
+    "/" : {
+      "get" : {
+        "tags" : [ "Health Checks" ],
+        "summary" : "Content Home Route",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns version and some general information",
+            "schema" : {
+              "$ref" : "#/definitions/HomeGet"
+            }
+          }
+        }
+      }
+    },
+    "/{instanceId}" : {
+      "get" : {
+        "tags" : [ "Health Checks" ],
+        "summary" : "Content Home Route filtering by instance",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns version and some general information",
+            "schema" : {
+              "$ref" : "#/definitions/HomeGet"
+            }
+          }
+        }
+      }
+    },
+    "/serviceStatus/" : {
+      "get" : {
+        "tags" : [ "Health Checks" ],
+        "summary" : "This route check differences between manifest and current content catalogs",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns catalog version and some general information",
+            "schema" : {
+              "$ref" : "#/definitions/ServiceStatusGet"
+            }
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/time/" : {
+      "get" : {
+        "tags" : [ "Health Checks" ],
+        "summary" : "This API call returns Content API server’s current time.",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns server’s current time.",
+            "schema" : {
+              "$ref" : "#/definitions/TimeGet"
+            }
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/content/{contentPid}/" : {
+      "get" : {
+        "tags" : [ "Content" ],
+        "summary" : "Get metadata and content properties for one content.",
+        "description" : "This is the basic API call to get metadata and content properties for one specific content.",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentPid",
+          "in" : "path",
+          "description" : "Content PID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeTrailerMedias",
+          "in" : "query",
+          "description" : "Include trailer medias.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includePlaybackFeatures",
+          "in" : "query",
+          "description" : "Include playback features.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "relatedContents",
+          "in" : "query",
+          "description" : "Include related contents on response.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter contents by their availability.",
+          "required" : false,
+          "type" : "boolean"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Content",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsArray"
+            }
+          },
+          "400" : {
+            "description" : "In case of non existent Content Type"
+          },
+          "404" : {
+            "description" : "In case of PID has not been sent"
+          },
+          "500" : {
+            "description" : "In case of non existent PID"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/content/{contentPid}/children/" : {
+      "get" : {
+        "tags" : [ "Content" ],
+        "summary" : "Get all contents related as children",
+        "description" : "This is the basic API call to get all contents related as children to requested contentPid. This route accepts Content Attributes Filter (CA_X=value)",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentPid",
+          "in" : "path",
+          "description" : "Content PID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentTypes",
+          "in" : "query",
+          "description" : "Content Types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "relatedContents",
+          "in" : "query",
+          "description" : "Include related contents on response.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter contents by their availability.",
+          "required" : false,
+          "type" : "boolean"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Content Children",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsObjectList"
+            }
+          },
+          "400" : {
+            "description" : "Calling for nonexistent PID"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/content/{contentPid}/schedules/" : {
+      "get" : {
+        "tags" : [ "Schedule" ],
+        "summary" : "Get available schedules",
+        "description" : "This API call returns all available schedules for a specific Live Program or Live Series. contentPid must be a LPR, LSE or LEP.",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentPid",
+          "in" : "path",
+          "description" : "Content PID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter Availability.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Content Schedules",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsObjectList"
+            }
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/contents/" : {
+      "get" : {
+        "tags" : [ "Contents" ],
+        "summary" : "Get metadata and content properties for multiple contents.",
+        "description" : "This is the basic API call to get metadata and content properties for multiple contents.",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "pids",
+          "in" : "query",
+          "description" : "Pids. comma-separated",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeTrailerMedias",
+          "in" : "query",
+          "description" : "Include trailer medias.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includePlaybackFeatures",
+          "in" : "query",
+          "description" : "Include playback features.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "relatedContents",
+          "in" : "query",
+          "description" : "Include related contents on response.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Contents",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsArray"
+            }
+          },
+          "400" : {
+            "description" : "In case of PIDs has not been sent"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/contents/all/" : {
+      "get" : {
+        "tags" : [ "Contents" ],
+        "summary" : "Get contents of content type.",
+        "description" : "This API call returns all contents of a specific content type.",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentTypes",
+          "in" : "query",
+          "description" : "content Types. comma-separated",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "relatedContents",
+          "in" : "query",
+          "description" : "Include related contents",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Contents",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsObjectList"
+            }
+          },
+          "400" : {
+            "description" : "In case of 'contentTypes' has not been sent"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/contents/children/" : {
+      "get" : {
+        "tags" : [ "Contents" ],
+        "summary" : "Get children of multiple contents.",
+        "description" : "This API call returns all contents related as children to one or more parent contents. This routes accepts Content Attributes Filter (CA_X=value)",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "pids",
+          "in" : "query",
+          "description" : "Pids. comma-separated",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentTypes",
+          "in" : "query",
+          "description" : "content Types. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeTrailerMedias",
+          "in" : "query",
+          "description" : "Include trailer medias.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includePlaybackFeatures",
+          "in" : "query",
+          "description" : "Include playback features.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "relatedContents",
+          "in" : "query",
+          "description" : "Include related contents on response.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired Content children",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsChildren"
+            }
+          },
+          "500" : {
+            "description" : "In case of 'pids' has not been sent"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/relatedContents/" : {
+      "get" : {
+        "tags" : [ "Related Content" ],
+        "summary" : "Get related contents",
+        "description" : "As mentioned in the basics section about content relations, this API call returns all related contents to a specific content. You should send or Source PID or Target PID not both or neither.\nThis routes accepts Content Attributes Filter (CA_X=value)\nTo understand the concepts of SourcePid and TargetPid, imagine the following scenario\n\n- CHA123 is a MibChannel containing all movies directed by Quentin Tarantino.\n- MOV234 is the movie Kill Bill\n- PER345 is Quentin Tarantino\n\nCalling CHA123 as the SourcePid, MOV234 relates to it as a child.\n\nCalling MOV234 as the TargetPid, response will have all contents of which the movie is a child, that is, CHA123 would be in the response, plus any other MibChannel that includes MOV234.\n\nCalling MOV234 as the SourcePid, PER345 relates to it as a director.\n\nCalling PER345 as the TargetPid, response will have all contents of which Tarantino is either a director or an actor.\n",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "sourcePids",
+          "in" : "query",
+          "description" : "Source Pids. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "targetPids",
+          "in" : "query",
+          "description" : "Target Pids. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "contentTypes",
+          "in" : "query",
+          "description" : "content Types. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter Availability.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter. comma-separated",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired related contents",
+            "schema" : {
+              "$ref" : "#/definitions/RelatedContentsGet"
+            }
+          },
+          "400" : {
+            "description" : "No SourcePid nor TargetPid"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/search/" : {
+      "get" : {
+        "tags" : [ "Search" ],
+        "summary" : "Runs a search on catalog",
+        "description" : "This method returns contents filtered by a specified term in a given search field (e.g. title). Other additional filters are content types, availability and content attribute filters. It also returns suggestions based on the term when no results are found by the default method.\nMore details about the usage and behavior of /Search can be found in UUX Platform's Search Interface (https://docs.google.com/document/d/1v8Rpxp2Dj65y6ed3MVBlaXbAH2tPCM3FjLnCYG2jf18/edit#heading=h.4opfs7p67jl)\nThis routes accepts Content Attributes Filter (CA_X=value)",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "term",
+          "in" : "query",
+          "description" : "Search term",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "contentTypes",
+          "in" : "query",
+          "description" : "content Types. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "searchFields",
+          "in" : "query",
+          "description" : "search fields. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "integer"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter Availability.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "enableSuggestions",
+          "in" : "query",
+          "description" : "Enable Suggestion.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter. comma-separated",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns result of search",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsObjectList"
+            }
+          },
+          "400" : {
+            "description" : "Not declaring term"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/schedules/" : {
+      "get" : {
+        "tags" : [ "Schedules" ],
+        "summary" : "Get schedules",
+        "description" : "This API call requires one or more Live Channel PIDs and returns all their schedules in a period of time (up to 24 hours). This routes accepts Content Attributes Filter (CA_X=value)",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "liveChannelPids",
+          "in" : "query",
+          "description" : "Live Channel PIDS.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "startTime",
+          "in" : "query",
+          "description" : "Start Time.",
+          "required" : true,
+          "type" : "integer"
+        }, {
+          "name" : "endTime",
+          "in" : "query",
+          "description" : "End Time.",
+          "required" : true,
+          "type" : "integer"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter Availability.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter. comma-separated",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired schedules",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsArray"
+            }
+          },
+          "400" : {
+            "description" : "- Not declaring startTime / endTime\n- Requesting for period greater than 24 hours between startTime and endTime\n- Requesting for endTime < startTime\n- Not declaring any Live Channel PIDs\n"
+          }
+        }
+      }
+    },
+    "/{instanceId}/{catalogName}/{catalogLanguage}/pagedSchedules/" : {
+      "get" : {
+        "tags" : [ "Schedules" ],
+        "summary" : "Get schedules paged",
+        "description" : "This API call returns schedules accepting pagination and does not have the 24-hour period limit. Sometimes you might get only a few schedules, even requesting for a month period. Maybe you have only a few available schedules. You may try the same call using filterAvailability=false. Sometimes an empty response means that there’s no available schedules. You may try the same call using filterAvailability=false. This routes accepts Content Attributes Filter (CA_X=value)",
+        "parameters" : [ {
+          "name" : "instanceId",
+          "in" : "path",
+          "description" : "Instance ID",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogName",
+          "in" : "path",
+          "description" : "Catalog Name",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "catalogLanguage",
+          "in" : "path",
+          "description" : "Catalog Language",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "liveChannelPids",
+          "in" : "query",
+          "description" : "Live Channel PIDS.",
+          "required" : true,
+          "type" : "string"
+        }, {
+          "name" : "startTime",
+          "in" : "query",
+          "description" : "Start Time.",
+          "required" : true,
+          "type" : "integer"
+        }, {
+          "name" : "endTime",
+          "in" : "query",
+          "description" : "End Time.",
+          "required" : true,
+          "type" : "integer"
+        }, {
+          "name" : "orderBy",
+          "in" : "query",
+          "description" : "Order by.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "description" : "Offset.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "description" : "Limit.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "filterAvailability",
+          "in" : "query",
+          "description" : "Filter Availability.",
+          "required" : false,
+          "type" : "boolean"
+        }, {
+          "name" : "includeImages",
+          "in" : "query",
+          "description" : "Include images. Format is [image_type]:[width]:[height]:[image_format]:[resize_type]:[image_class] where [image_type] is required",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeAttributes",
+          "in" : "query",
+          "description" : "Include custom attributes. comma-separated",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "includeRelations",
+          "in" : "query",
+          "description" : "Include related contents' PIDs, grouped by relation types.",
+          "required" : false,
+          "type" : "string"
+        }, {
+          "name" : "fields",
+          "in" : "query",
+          "description" : "Fields filter. comma-separated",
+          "required" : false,
+          "type" : "string"
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Returns desired schedules",
+            "schema" : {
+              "$ref" : "#/definitions/ContentsObjectList"
+            }
+          },
+          "400" : {
+            "description" : "- Not declaring startTime / endTime\n- Not declaring any Live Channel PIDs\n"
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "ContentsArray" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "type" : "array",
+          "description" : "Content",
+          "items" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Coude"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : [ "{}", "{}" ],
+        "HttpStatusCode" : 0,
+        "Severity" : 6,
+        "StatusCode" : 1,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "TimeGet" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "$ref" : "#/definitions/TimeGet_Content"
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : {
+          "Now" : 0
+        },
+        "HttpStatusCode" : 6,
+        "Severity" : 1,
+        "StatusCode" : 5,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "ContentsObjectList" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "$ref" : "#/definitions/ContentsObjectList_Content"
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : {
+          "List" : [ "{}", "{}" ],
+          "Count" : 0,
+          "Limit" : 6,
+          "Offset" : 1
+        },
+        "HttpStatusCode" : 5,
+        "Severity" : 5,
+        "StatusCode" : 2,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "RelatedContentsGet" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "$ref" : "#/definitions/RelatedContentsGet_Content"
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : {
+          "List" : [ {
+            "Relation" : "Relation",
+            "SourcePid" : "SourcePid",
+            "Content" : "{}",
+            "TargetPid" : "TargetPid"
+          }, {
+            "Relation" : "Relation",
+            "SourcePid" : "SourcePid",
+            "Content" : "{}",
+            "TargetPid" : "TargetPid"
+          } ],
+          "Count" : 0,
+          "Limit" : 6,
+          "Offset" : 1
+        },
+        "HttpStatusCode" : 5,
+        "Severity" : 5,
+        "StatusCode" : 2,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "RelatedContentsObject" : {
+      "type" : "object",
+      "properties" : {
+        "Relation" : {
+          "type" : "string",
+          "description" : "Relation Type name"
+        },
+        "SourcePid" : {
+          "type" : "string",
+          "description" : "Source PID"
+        },
+        "TargetPid" : {
+          "type" : "string",
+          "description" : "Target PID"
+        },
+        "Content" : {
+          "type" : "object",
+          "description" : "Content",
+          "properties" : { }
+        }
+      },
+      "example" : {
+        "Relation" : "Relation",
+        "SourcePid" : "SourcePid",
+        "Content" : "{}",
+        "TargetPid" : "TargetPid"
+      }
+    },
+    "ContentsChildren" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "type" : "array",
+          "description" : "Contents",
+          "items" : {
+            "$ref" : "#/definitions/ContentsChildren_Content"
+          }
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : [ {
+          "Pid" : "Pid",
+          "List" : [ "{}", "{}" ],
+          "Count" : 0,
+          "Limit" : 6,
+          "Offset" : 1
+        }, {
+          "Pid" : "Pid",
+          "List" : [ "{}", "{}" ],
+          "Count" : 0,
+          "Limit" : 6,
+          "Offset" : 1
+        } ],
+        "HttpStatusCode" : 5,
+        "Severity" : 5,
+        "StatusCode" : 2,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "HomeGet" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "$ref" : "#/definitions/HomeGet_Content"
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : {
+          "Database_Connections" : "{}",
+          "Service_Connections" : "{}",
+          "UUX_Platform_API" : {
+            "Version" : "Version",
+            "API" : "API"
+          }
+        },
+        "HttpStatusCode" : 0,
+        "Severity" : 6,
+        "StatusCode" : 1,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "ServiceStatusGet" : {
+      "type" : "object",
+      "properties" : {
+        "Content" : {
+          "$ref" : "#/definitions/ServiceStatusGet_Content"
+        },
+        "HttpStatusCode" : {
+          "type" : "integer",
+          "description" : "HTTP Status Code"
+        },
+        "Severity" : {
+          "type" : "integer",
+          "description" : "Severity"
+        },
+        "StatusCode" : {
+          "type" : "integer",
+          "description" : "Status Code"
+        },
+        "StatusMessage" : {
+          "type" : "string",
+          "description" : "Message"
+        }
+      },
+      "example" : {
+        "Content" : {
+          "Catalogs" : [ {
+            "Language" : "Language",
+            "CanConnectToPublishedVersion" : true,
+            "InstanceId" : "InstanceId",
+            "MinimumVersion" : "MinimumVersion",
+            "PublishedVersion" : 7,
+            "CurrentVersion" : 0,
+            "NextVersion" : 2,
+            "NextVersionStatus" : {
+              "IsDownloaded" : true,
+              "IsInstalled" : true,
+              "PublishDate" : 5,
+              "ManifestVersion" : 5,
+              "DatabaseName" : "DatabaseName",
+              "DownloadDate" : 6,
+              "IsPublished" : true,
+              "InstallDate" : 1
+            },
+            "CurrentVersionStatus" : {
+              "IsDownloaded" : true,
+              "IsInstalled" : true,
+              "PublishDate" : 5,
+              "ManifestVersion" : 5,
+              "DatabaseName" : "DatabaseName",
+              "DownloadDate" : 6,
+              "IsPublished" : true,
+              "InstallDate" : 1
+            },
+            "Name" : "Name"
+          }, {
+            "Language" : "Language",
+            "CanConnectToPublishedVersion" : true,
+            "InstanceId" : "InstanceId",
+            "MinimumVersion" : "MinimumVersion",
+            "PublishedVersion" : 7,
+            "CurrentVersion" : 0,
+            "NextVersion" : 2,
+            "NextVersionStatus" : {
+              "IsDownloaded" : true,
+              "IsInstalled" : true,
+              "PublishDate" : 5,
+              "ManifestVersion" : 5,
+              "DatabaseName" : "DatabaseName",
+              "DownloadDate" : 6,
+              "IsPublished" : true,
+              "InstallDate" : 1
+            },
+            "CurrentVersionStatus" : {
+              "IsDownloaded" : true,
+              "IsInstalled" : true,
+              "PublishDate" : 5,
+              "ManifestVersion" : 5,
+              "DatabaseName" : "DatabaseName",
+              "DownloadDate" : 6,
+              "IsPublished" : true,
+              "InstallDate" : 1
+            },
+            "Name" : "Name"
+          } ]
+        },
+        "HttpStatusCode" : 9,
+        "Severity" : 3,
+        "StatusCode" : 2,
+        "StatusMessage" : "StatusMessage"
+      }
+    },
+    "ServiceStatusGetObject" : {
+      "type" : "object",
+      "properties" : {
+        "CanConnectToPublishedVersion" : {
+          "type" : "boolean",
+          "description" : "Can connect to published version"
+        },
+        "CurrentVersion" : {
+          "type" : "integer",
+          "description" : "Current version"
+        },
+        "CurrentVersionStatus" : {
+          "$ref" : "#/definitions/ServiceStatusVersionStatusObject"
+        },
+        "InstanceId" : {
+          "type" : "string",
+          "description" : "Instance ID"
+        },
+        "Language" : {
+          "type" : "string",
+          "description" : "Language"
+        },
+        "MinimumVersion" : {
+          "type" : "string",
+          "description" : "Minimum Version"
+        },
+        "Name" : {
+          "type" : "string",
+          "description" : "Name of catalog"
+        },
+        "NextVersion" : {
+          "type" : "integer",
+          "description" : "Next Version"
+        },
+        "NextVersionStatus" : {
+          "$ref" : "#/definitions/ServiceStatusVersionStatusObject"
+        },
+        "PublishedVersion" : {
+          "type" : "integer",
+          "description" : "Published Version"
+        }
+      },
+      "example" : {
+        "Language" : "Language",
+        "CanConnectToPublishedVersion" : true,
+        "InstanceId" : "InstanceId",
+        "MinimumVersion" : "MinimumVersion",
+        "PublishedVersion" : 7,
+        "CurrentVersion" : 0,
+        "NextVersion" : 2,
+        "NextVersionStatus" : {
+          "IsDownloaded" : true,
+          "IsInstalled" : true,
+          "PublishDate" : 5,
+          "ManifestVersion" : 5,
+          "DatabaseName" : "DatabaseName",
+          "DownloadDate" : 6,
+          "IsPublished" : true,
+          "InstallDate" : 1
+        },
+        "CurrentVersionStatus" : {
+          "IsDownloaded" : true,
+          "IsInstalled" : true,
+          "PublishDate" : 5,
+          "ManifestVersion" : 5,
+          "DatabaseName" : "DatabaseName",
+          "DownloadDate" : 6,
+          "IsPublished" : true,
+          "InstallDate" : 1
+        },
+        "Name" : "Name"
+      }
+    },
+    "ServiceStatusVersionStatusObject" : {
+      "type" : "object",
+      "properties" : {
+        "DatabaseName" : {
+          "type" : "string",
+          "description" : "Database Name"
+        },
+        "DownloadDate" : {
+          "type" : "integer",
+          "description" : "Download Date"
+        },
+        "InstallDate" : {
+          "type" : "integer",
+          "description" : "Install Date"
+        },
+        "IsDownloaded" : {
+          "type" : "boolean",
+          "description" : "Flag to define if catalog is downloaded"
+        },
+        "IsInstalled" : {
+          "type" : "boolean",
+          "description" : "Flag to define if catalog is installed"
+        },
+        "IsPublished" : {
+          "type" : "boolean",
+          "description" : "Flag to define if catalog is published"
+        },
+        "ManifestVersion" : {
+          "type" : "integer",
+          "description" : "Version from manifest"
+        },
+        "PublishDate" : {
+          "type" : "integer",
+          "description" : "Publish date"
+        }
+      },
+      "example" : {
+        "IsDownloaded" : true,
+        "IsInstalled" : true,
+        "PublishDate" : 5,
+        "ManifestVersion" : 5,
+        "DatabaseName" : "DatabaseName",
+        "DownloadDate" : 6,
+        "IsPublished" : true,
+        "InstallDate" : 1
+      }
+    },
+    "TimeGet_Content" : {
+      "properties" : {
+        "Now" : {
+          "type" : "integer",
+          "description" : "Unix timestamp Now"
+        }
+      },
+      "description" : "Content",
+      "example" : {
+        "Now" : 0
+      }
+    },
+    "ContentsObjectList_Content" : {
+      "properties" : {
+        "List" : {
+          "type" : "array",
+          "description" : "Array of contents",
+          "items" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "Count" : {
+          "type" : "integer",
+          "description" : "Count"
+        },
+        "Limit" : {
+          "type" : "integer",
+          "description" : "Limit"
+        },
+        "Offset" : {
+          "type" : "integer",
+          "description" : "Offset"
+        }
+      },
+      "description" : "Content",
+      "example" : {
+        "List" : [ "{}", "{}" ],
+        "Count" : 0,
+        "Limit" : 6,
+        "Offset" : 1
+      }
+    },
+    "RelatedContentsGet_Content" : {
+      "properties" : {
+        "List" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/RelatedContentsObject"
+          }
+        },
+        "Count" : {
+          "type" : "integer",
+          "description" : "Count"
+        },
+        "Limit" : {
+          "type" : "integer",
+          "description" : "Limit"
+        },
+        "Offset" : {
+          "type" : "integer",
+          "description" : "Offset"
+        }
+      },
+      "description" : "Content",
+      "example" : {
+        "List" : [ {
+          "Relation" : "Relation",
+          "SourcePid" : "SourcePid",
+          "Content" : "{}",
+          "TargetPid" : "TargetPid"
+        }, {
+          "Relation" : "Relation",
+          "SourcePid" : "SourcePid",
+          "Content" : "{}",
+          "TargetPid" : "TargetPid"
+        } ],
+        "Count" : 0,
+        "Limit" : 6,
+        "Offset" : 1
+      }
+    },
+    "ContentsChildren_Content" : {
+      "properties" : {
+        "Pid" : {
+          "type" : "string",
+          "description" : "PID requested"
+        },
+        "List" : {
+          "type" : "array",
+          "description" : "Array of children",
+          "items" : {
+            "type" : "object",
+            "properties" : { }
+          }
+        },
+        "Count" : {
+          "type" : "integer",
+          "description" : "Count"
+        },
+        "Limit" : {
+          "type" : "integer",
+          "description" : "Limit"
+        },
+        "Offset" : {
+          "type" : "integer",
+          "description" : "Offset"
+        }
+      },
+      "example" : {
+        "Pid" : "Pid",
+        "List" : [ "{}", "{}" ],
+        "Count" : 0,
+        "Limit" : 6,
+        "Offset" : 1
+      }
+    },
+    "HomeGet_Content_UUX_Platform_API" : {
+      "properties" : {
+        "API" : {
+          "type" : "string",
+          "description" : "API name"
+        },
+        "Version" : {
+          "type" : "string",
+          "description" : "API version"
+        }
+      },
+      "description" : "Content API version data",
+      "example" : {
+        "Version" : "Version",
+        "API" : "API"
+      }
+    },
+    "HomeGet_Content" : {
+      "properties" : {
+        "Database_Connections" : {
+          "type" : "object",
+          "description" : "Available catalogs",
+          "properties" : { }
+        },
+        "Service_Connections" : {
+          "type" : "object",
+          "description" : "Service connection status",
+          "properties" : { }
+        },
+        "UUX_Platform_API" : {
+          "$ref" : "#/definitions/HomeGet_Content_UUX_Platform_API"
+        }
+      },
+      "example" : {
+        "Database_Connections" : "{}",
+        "Service_Connections" : "{}",
+        "UUX_Platform_API" : {
+          "Version" : "Version",
+          "API" : "API"
+        }
+      }
+    },
+    "ServiceStatusGet_Content" : {
+      "properties" : {
+        "Catalogs" : {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/ServiceStatusGetObject"
+          }
+        }
+      },
+      "example" : {
+        "Catalogs" : [ {
+          "Language" : "Language",
+          "CanConnectToPublishedVersion" : true,
+          "InstanceId" : "InstanceId",
+          "MinimumVersion" : "MinimumVersion",
+          "PublishedVersion" : 7,
+          "CurrentVersion" : 0,
+          "NextVersion" : 2,
+          "NextVersionStatus" : {
+            "IsDownloaded" : true,
+            "IsInstalled" : true,
+            "PublishDate" : 5,
+            "ManifestVersion" : 5,
+            "DatabaseName" : "DatabaseName",
+            "DownloadDate" : 6,
+            "IsPublished" : true,
+            "InstallDate" : 1
+          },
+          "CurrentVersionStatus" : {
+            "IsDownloaded" : true,
+            "IsInstalled" : true,
+            "PublishDate" : 5,
+            "ManifestVersion" : 5,
+            "DatabaseName" : "DatabaseName",
+            "DownloadDate" : 6,
+            "IsPublished" : true,
+            "InstallDate" : 1
+          },
+          "Name" : "Name"
+        }, {
+          "Language" : "Language",
+          "CanConnectToPublishedVersion" : true,
+          "InstanceId" : "InstanceId",
+          "MinimumVersion" : "MinimumVersion",
+          "PublishedVersion" : 7,
+          "CurrentVersion" : 0,
+          "NextVersion" : 2,
+          "NextVersionStatus" : {
+            "IsDownloaded" : true,
+            "IsInstalled" : true,
+            "PublishDate" : 5,
+            "ManifestVersion" : 5,
+            "DatabaseName" : "DatabaseName",
+            "DownloadDate" : 6,
+            "IsPublished" : true,
+            "InstallDate" : 1
+          },
+          "CurrentVersionStatus" : {
+            "IsDownloaded" : true,
+            "IsInstalled" : true,
+            "PublishDate" : 5,
+            "ManifestVersion" : 5,
+            "DatabaseName" : "DatabaseName",
+            "DownloadDate" : 6,
+            "IsPublished" : true,
+            "InstallDate" : 1
+          },
+          "Name" : "Name"
+        } ]
+      }
+    }
+  }
+}
